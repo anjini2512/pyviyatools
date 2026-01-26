@@ -123,6 +123,43 @@ def apply_changes(filtered_data):
         updateconfigurationproperty(command)
 
 
+def _read_target_from_stdin():
+    """
+    Read all of STDIN and parse JSON.
+    """
+    try:
+        text = sys.stdin.read()
+        if not text.strip():
+            return None
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"❌ Failed to parse JSON from STDIN: {e}")
+
+
+def _load_target_data(args):
+    """
+    Load target JSON from:
+      - file path (if -f provided and not '-'),
+      - STDIN (if -f == '-' or if no file provided and STDIN is not a TTY).
+    """
+    # Case 1: explicit file path
+    if args.file and args.file != "-":
+        if not os.path.isfile(args.file):
+            raise SystemExit(f"❌ File not found: {args.file}")
+        return getinputjson(args.file)
+
+    # Case 2: explicit '-' or implicit STDIN
+    stdin_has_data = not sys.stdin.isatty()
+    if args.file == "-" or (args.file is None and stdin_has_data):
+        data = _read_target_from_stdin()
+        if data is None:
+            raise SystemExit("❌ No JSON detected on STDIN. Pipe JSON or provide -f <file>.")
+        return data
+
+    # Nothing provided
+    raise SystemExit("❌ No input provided. Use -f <file>, -f -, or pipe JSON into STDIN.")
+
+
 def main():
     args = parse_args()
     logging.basicConfig(level=logging.INFO)
