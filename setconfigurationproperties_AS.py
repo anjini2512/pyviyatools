@@ -18,8 +18,10 @@ import argparse
 import json
 import logging
 import os
+import shlex
+import sys
 import tempfile
-import sys #AS - to be able to read form standard input (stdin)
+#import sys #AS - to be able to read form standard input (stdin)
 
 from deepdiff import DeepDiff
 from sharedfunctions import (
@@ -34,7 +36,7 @@ clicommand=getclicommand()
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Import JSON files that update Viya configuration."
+        description="Safely update Viya configuration. Read JSON from a file (-f) or from STDIN (pipe)."
     )
     parser.add_argument("-o", "--output", choices=["csv", "json", "simple", "simplejson"], default="json")
     parser.add_argument("-f", "--file", help="The JSON configuration definition to import")
@@ -42,9 +44,8 @@ def parse_args():
     parser.add_argument("--ignore-metadata-keys", nargs="*", default=["createdBy","creationTimeStamp", "modifiedBy", "modifiedTimeStamp"])
     parser.add_argument("--include-keys", nargs="*", default=["version", "accept", "name", "items"])
     parser.add_argument("--dryrun", action="store_true", help="Simulate the operation without applying changes")
-    parser.add_argument("--stdin", action="store_true", help="Read target JSON from standard input (pipe)") 
-        #AS - add --stdin to standard parser. Boolean flag if present, read JSON from stdin
     return parser.parse_args()
+
 
 # Extracts the config definition from a json file.
 # Example sas.identities.providers.ldap.user
@@ -129,7 +130,7 @@ def main():
     if args.file and not os.path.isfile(args.file):
         raise FileNotFoundError(f"File not found: {args.file}")
 
-    target_data = getinputjson(args.file)
+    target_data = _load_target_data(args)
 
     config_definition = extract_config_definition(target_data)
     logging.info(f"config definition = {config_definition}")
