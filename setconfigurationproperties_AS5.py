@@ -132,9 +132,6 @@ def load_target_data(args):
     Load target JSON from:
       - file path (if -f provided and not '-'),
       - STDIN (if -f == '-' or if no file is provided and STDIN is not a TTY).
-
-    This is the combined and simplified version of _read_target_from_stdin()
-    and _load_target_data().
     """
     # --- Case 1: explicit file path (normal behavior) ---
     if args.file and args.file != "-":
@@ -162,7 +159,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
 
     # IMPORTANT: Do not pre-check args.file here; _load_target_data handles '-' and STDIN cases correctly.
-    target_data = _load_target_data(args)
+    target_data = load_target_data(args)
 
     config_definition = extract_config_definition(target_data)
     logging.info(f"config definition = {config_definition}")
