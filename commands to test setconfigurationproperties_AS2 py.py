@@ -45,7 +45,7 @@ pip install -r requirements.txt
 ############################ TROUBLESHOOT #################################
 
 #if you do -ls and setconfigurationproperties_AS.py is not green, it means it is not executable. Run:
-chmod +x setconfigurationproperties_AS2.py
+chmod +x setconfigurationproperties_AS5.py
 
 
 
@@ -60,7 +60,7 @@ python3 getconfigurationproperties.py -c sas.compute.server -o json \
     + (if (. | contains("cas.DQLOCALE="))   then "" else "cas.DQLOCALE='\''ENUSA'\''\n"   end)
   )
 ' \
-| python3 ./setconfigurationproperties_AS3.py --dryrun
+| python3 ./setconfigurationproperties_AS5.py --dryrun
 ``
 
 
@@ -74,7 +74,7 @@ python3 getconfigurationproperties.py -c sas.compute.server -o json \
     + (if (. | contains("cas.DQLOCALE="))   then "" else "cas.DQLOCALE='\''ENUSA'\''\n"   end)
   )
 ' \
-| python3 ./setconfigurationproperties_AS3.py
+| python3 ./setconfigurationproperties_AS5.py
 ``
 
 
