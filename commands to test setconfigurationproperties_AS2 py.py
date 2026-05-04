@@ -110,3 +110,97 @@ kubectl -n <your-namespace> rollout restart deploy cas-server-default
 
 
 python3 getconfigurationproperties.py -c sas.cas.instance.config -o json |jq .items[0]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### April 13 ######
+python3 getconfigurationproperties.py -c sas.compute.server -o json > full.json
+
+jq '
+  .items |=
+  (
+    map(
+      if .name=="configuration_options" then
+        (.contents |=
+          (
+            .
+            + (if contains("cas.DQSETUPLOC=") then "" else "\ncas.DQSETUPLOC='\''QKB NAME'\''\n" end)
+            + (if contains("cas.DQLOCALE=")   then "" else "cas.DQLOCALE='\''ENUSA'\''\n"   end)
+          )
+        )
+      else
+        .
+      end
+    )
+  )
+' full.json > updated.json
+
+sas-viya configuration configurations update --file updated.json
+
+#verify
+python3 getconfigurationproperties.py -c sas.compute.server -o json \
+| jq '.items[] | select(.name=="configuration_options") | .contents'
+
+
+
+
+
+#I think this works
+
+python3 getconfigurationproperties.py -c sas.compute.server -o json \
+| jq '
+  (.items[] | select(.name=="configuration_options") | .contents) |=
+  (
+    .
+    + (if contains("-DQSETUPLOC") then "" else "\n-DQSETUPLOC '\''QKB NAME'\''\n" end)
+    + (if contains("-DQLOCALE") then "" else "-DQLOCALE '\''ENUSA'\''\n" end)
+  )
+' \
+| python3 ./setconfigurationproperties_AS5.py
+
+
+
+###############################################################
+############################################################################
+# It worked for Hannah. She did this:
+#dry run
+python3 getconfigurationproperties.py -c sas.compute.server -o json \
+| jq '
+  (.items[] | select(.name=="configuration_options") | .contents) |=
+  (
+    .
+    + (if (. | contains("DQSETUPLOC")) then "" else "\nDQSETUPLOC '\''QKB NAME'\''\n" end)
+    + (if (. | contains("DQLOCALE"))   then "" else "DQLOCALE (ENUSA)\n"   end)
+  )
+' \
+| python3 ./setconfigurationproperties_AS --dryrun
+``
+ 
+#apply the changes
+python3 getconfigurationproperties.py -c sas.compute.server -o json \
+| jq '
+  (.items[] | select(.name=="configuration_options") | .contents) |=
+  (
+    .
+    + (if (. | contains("DQSETUPLOC")) then "" else "\nDQSETUPLOC '\''QKB NAME'\''\n" end)
+    + (if (. | contains("DQLOCALE"))   then "" else "DQLOCALE (ENUSA)\n"   end)
+  )
+' \
+| python3 ./setconfigurationproperties_AS
+ 
+
+#check that it worked
+python3 getconfigurationproperties.py -c sas.compute.server -o json \
+| jq -r '.items[] | select(.name=="configuration_options") | .contents'
