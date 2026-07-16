@@ -379,3 +379,14 @@ For example:
 ./setupcopilotcredentials.py --client-id xxxxxxxxxx --client-secret xxxxxxxxxxxxxxxxx
 ./setupcopilotcredentials.py --input-file /tmp/credentials.txt --force
 ```
+
+**setconfigurationproperties.py**
+```bash
+# update timeout settings using piped JSON
+python3 getconfigurationproperties.py -c server -o json \
+| jq '
+  .items[0]["servlet.session.timeout"] = "2700"
+  | .items[0]["http.session.maxAge"] = "2700"
+' \
+| python3 setconfigurationproperties.py
+```
